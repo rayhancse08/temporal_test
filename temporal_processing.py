@@ -24,37 +24,6 @@ def get_quarters_day(date_obj):
         if month == last_month_of_quarter:
             return calendar.monthrange(year,first_month_of_quarter)[1]+calendar.monthrange(year,second_month_of_quarter)[1]+month_day
 
-# function for getting julian day from date.
-def date_to_jd(year,month,day):
-    
-    if month == 1 or month == 2:
-        yearp = year - 1
-        monthp = month + 12
-    else:
-        yearp = year
-        monthp = month
-    
-
-    if ((year < 1582) or
-        (year == 1582 and month < 10) or
-        (year == 1582 and month == 10 and day < 15)):
-        
-        B = 0
-    else:
-        # after start of Gregorian calendar
-        A = math.trunc(yearp / 100.)
-        B = 2 - A + math.trunc(A / 4.)
-        
-    if yearp < 0:
-        C = math.trunc((365.25 * yearp) - 0.75)
-    else:
-        C = math.trunc(365.25 * yearp)
-        
-    D = math.trunc(30.6001 * (monthp + 1))
-    
-    jd = B + C + D + day + 1720994.5
-    
-    return jd
 
 # check date is weekday or not.
 def get_weekday_flag(week_day_num):
@@ -167,59 +136,60 @@ def get_week_last_day_flag(date,week_end_date):
 # create pydblite database table
 date_table = Base('temporal_data.pdl')
 
-# check db table is exists or not.if exists then remove file.
-if date_table.exists():
-    os.remove('temporal_data.pdl')
-
-# create table with field.
-date_table.create(
-    'date',
-    'julian_date_num',
-    'sequence',
-    'week_day_num',
-    'day_name',
-    'day_short_name',
-    'month_week_num',
-    'month_week_begin_date',
-    'month_week_end_date',
-    'quarter_week_num',
-    'quarter_week_begin_date',
-    'quarter_week_end_date',
-    'year_week_num',
-    'year_week_begin_date',
-    'year_week_end_date',
-    'month_day_num',
-    'month_num',
-    'month_name',
-    'month_short_name',
-    'month_begin_date',
-    'month_end_date',
-    'quarter_day_num',
-    'quarter_num',
-    'quarter_name',
-    'quarter_begin_date',
-    'quarter_end_date',
-    'year_day_num',
-    'year_num',
-    'year_begin_date',
-    'year_end_date',
-    'dd_mon_yyyy',
-    'dd_month_yyyy',
-    'mon_dd_yyyy',
-    'month_dd_yyyy',
-    'dd_mm_yyyy',
-    'mm_dd_yyyy',
-    'weekday_flag',
-    'week_first_day_flag',
-    'week_last_day_flag',
-    'month_first_day_flag',
-    'month_last_day_flag',
-    'quarter_first_day_flag',
-    'quarter_last_day_flag',
-    'year_first_day_flag',
-    'year_last_day_flag',
-    'leap_year_flag'
-)
+# check db table is exists or not.if not exists then create table.
+if not date_table.exists():
+    # create table with field.
+    date_table.create(
+        'date',
+        'julian_date_num',
+        'sequence',
+        'week_day_num',
+        'day_name',
+        'day_short_name',
+        'month_week_num',
+        'month_week_begin_date',
+        'month_week_end_date',
+        'quarter_week_num',
+        'quarter_week_begin_date',
+        'quarter_week_end_date',
+        'year_week_num',
+        'year_week_begin_date',
+        'year_week_end_date',
+        'month_day_num',
+        'month_num',
+        'month_name',
+        'month_short_name',
+        'month_begin_date',
+        'month_end_date',
+        'quarter_day_num',
+        'quarter_num',
+        'quarter_name',
+        'quarter_begin_date',
+        'quarter_end_date',
+        'year_day_num',
+        'year_num',
+        'year_begin_date',
+        'year_end_date',
+        'dd_mon_yyyy',
+        'dd_month_yyyy',
+        'mon_dd_yyyy',
+        'month_dd_yyyy',
+        'dd_mm_yyyy',
+        'mm_dd_yyyy',
+        'mm_dd_yy',
+        'weekday_flag',
+        'week_first_day_flag',
+        'week_last_day_flag',
+        'month_first_day_flag',
+        'month_last_day_flag',
+        'quarter_first_day_flag',
+        'quarter_last_day_flag',
+        'year_first_day_flag',
+        'year_last_day_flag',
+        'leap_year_flag'
+    )
+    # create index
+    date_table.create_index('date','julian_date_num','sequence')
 
 # imput start date string
 start_date_string = input("Enter start date with format mm/dd/yyyy: ")
@@ -234,12 +204,15 @@ num_of_year = input("How many years of data(after start date): ")
 end_date = start_date + relativedelta(years=int(num_of_year))
 
 # day number between start and end date.
-day_num = (end_date - start_date).days+2
-
+day_num = (end_date - start_date).days
+# open table 
+date_table = date_table.open()
 # iterate date and process data.
-
 for item in range(day_num):
-    date = start_date+timedelta(days=item)
+    date = (start_date+timedelta(days=item)).date()
+    # check date is exists or not.If exists then continue.
+    if len(date_table(date=date))>0:
+        continue
     sequence = len(date_table)+1
     week_day_num = date.weekday()+1
     day_name =date.strftime("%A")
@@ -254,8 +227,8 @@ for item in range(day_num):
     month_end_date = month_begin_date + timedelta(days=(total_month_day - 1))
     quarter_num = (month_num -1)//3+1
     quarter_name = "Qtr{}".format(quarter_num)
-    quarter_begin_date = datetime(year_num, 3 * quarter_num - 2, 1)
-    quarter_end_date = quarter_begin_date + relativedelta(months=3, days=-1)
+    quarter_begin_date = datetime(year_num, 3 * quarter_num - 2, 1).date()
+    quarter_end_date = (quarter_begin_date + relativedelta(months=3, days=-1))
     year_day_num = date.timetuple().tm_yday 
     year_begin_date = date.replace(month=1, day=1)
     year_end_date = date.replace(month=12, day=31)
@@ -265,6 +238,7 @@ for item in range(day_num):
     month_dd_yyyy = date.strftime('%B-%d-%Y')
     dd_mm_yyyy = date.strftime('%d-%m-%Y')
     mm_dd_yyyy = date.strftime('%m-%d-%Y')
+    mm_dd_yy = date.strftime('%m/%d/%y')
     weekday_flag = get_weekday_flag(week_day_num)
     month_first_day_flag = get_month_first_day_flag(date,month_begin_date)
     month_last_day_flag = get_month_last_day_flag(date,month_end_date)
@@ -287,8 +261,9 @@ for item in range(day_num):
     year_week_end_date = get_year_week_end_date(week_end_date,year_end_date)
     week_first_day_flag = get_week_first_day_flag(date,week_start_date)
     week_last_day_flag = get_week_last_day_flag(date,week_end_date)
-    julian_date_num = date_to_jd(year_num,month_num,day_num)
-     
+    # julian_date_num = date_to_jd(year_num,month_num,day_num)
+    julian_date_num = float(date.strftime('%y%j'))
+    
     # insert data on table.
     date_table.insert(
         date=date,
@@ -327,6 +302,7 @@ for item in range(day_num):
         month_dd_yyyy =month_dd_yyyy,
         dd_mm_yyyy =dd_mm_yyyy,
         mm_dd_yyyy =mm_dd_yyyy,
+        mm_dd_yy = mm_dd_yy,
         weekday_flag =weekday_flag,
         week_first_day_flag=week_first_day_flag,
         week_last_day_flag = week_last_day_flag,
@@ -340,8 +316,7 @@ for item in range(day_num):
         )
 # save data.       
 date_table.commit()
-# open table and write data on csv
-date_table = date_table.open()
+
 with open('temporal_data.csv', 'w', newline='') as myfile:
      wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
      wr.writerow(list(date_table[0].keys()))
