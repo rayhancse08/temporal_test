@@ -6,6 +6,7 @@ import calendar
 from dateutil.relativedelta import relativedelta
 import csv
 import os
+import time
 
 # function for getting quarter day
 def get_quarters_day(date_obj):
@@ -177,6 +178,9 @@ if not date_table.exists():
         'dd_mm_yyyy',
         'mm_dd_yyyy',
         'mm_dd_yy',
+        'dd_mm_yy',
+        'm_d_yy',
+        'd_m_yy',
         'weekday_flag',
         'week_first_day_flag',
         'week_last_day_flag',
@@ -192,10 +196,19 @@ if not date_table.exists():
     date_table.create_index('date','julian_date_num','sequence')
 
 # imput start date string
-start_date_string = input("Enter start date with format mm/dd/yyyy: ")
+while True:
+    start_date_string = input("Enter start date with format mm/dd/yyyy: ")
+    try:
+        valid_date = time.strptime(start_date_string, '%m/%d/%Y')
+        # convert date string to date object.
+        start_date = dateparser.parse(start_date_string)
+        break
 
-# convert date string to date object.
-start_date = dateparser.parse(start_date_string)
+    except ValueError:
+        print('Invalid date!.Please enter valid date')
+        continue
+
+
 
 # input number of year which date will be generated and process data.
 num_of_year = input("How many years of data(after start date): ")
@@ -239,6 +252,9 @@ for item in range(day_num):
     dd_mm_yyyy = date.strftime('%d-%m-%Y')
     mm_dd_yyyy = date.strftime('%m-%d-%Y')
     mm_dd_yy = date.strftime('%m/%d/%y')
+    dd_mm_yy = date.strftime('%d/%m/%y')
+    m_d_yy = date.strftime('%-m/%-d/%y')
+    d_m_yy = date.strftime('%-d/%-m/%y')
     weekday_flag = get_weekday_flag(week_day_num)
     month_first_day_flag = get_month_first_day_flag(date,month_begin_date)
     month_last_day_flag = get_month_last_day_flag(date,month_end_date)
@@ -303,6 +319,9 @@ for item in range(day_num):
         dd_mm_yyyy =dd_mm_yyyy,
         mm_dd_yyyy =mm_dd_yyyy,
         mm_dd_yy = mm_dd_yy,
+        dd_mm_yy = dd_mm_yy,
+        m_d_yy = m_d_yy,
+        d_m_yy = d_m_yy,
         weekday_flag =weekday_flag,
         week_first_day_flag=week_first_day_flag,
         week_last_day_flag = week_last_day_flag,
