@@ -209,10 +209,14 @@ while True:
         print('Invalid date!.Please enter valid date')
         continue
 
-
-
-# input number of year which date will be generated and process data.
-num_of_year = input("How many years of data(after start date): ")
+while True:
+    # input number of year which date will be generated and process data.
+    num_of_year = input("How many years of data(after start date): ")
+    try:
+        valid_num_of_year = int(num_of_year)
+        break
+    except ValueError:
+        print("That's not an int!")
 
 # calculate end date.
 end_date = start_date + relativedelta(years=int(num_of_year))
