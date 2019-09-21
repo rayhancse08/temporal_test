@@ -195,8 +195,9 @@ if not date_table.exists():
     # create index
     date_table.create_index('date','julian_date_num','sequence')
 
-# imput start date string
+# validate date input.
 while True:
+    # imput start date string
     start_date_string = input("Enter start date with format mm/dd/yyyy: ")
     try:
         valid_date = time.strptime(start_date_string, '%m/%d/%Y')
@@ -335,10 +336,12 @@ for item in range(day_num):
         )
 # save data.       
 date_table.commit()
-
+# write data as CSV 
 with open('temporal_data.csv', 'w', newline='') as myfile:
      wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+     # write header
      wr.writerow(list(date_table[0].keys()))
+     # write value
      for item in date_table:
         wr.writerow(list(item.values()))
 
